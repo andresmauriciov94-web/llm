@@ -1,0 +1,26 @@
+# --- API / servidor ---
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.32,<0.33
+pydantic>=2.9,<3
+pydantic-settings>=2.6,<3
+
+# --- UI ---
+streamlit>=1.40,<2
+
+# --- Cliente HTTP ---
+httpx>=0.27,<0.29
+requests>=2.32,<3
+
+# --- Scraping ---
+beautifulsoup4>=4.12,<5
+trafilatura>=1.12,<2
+lxml>=5.3,<6
+
+# --- Vector store ---
+qdrant-client>=1.12,<2
+
+# --- Embeddings + reranker (traen torch CPU, instalado en el Dockerfile) ---
+sentence-transformers>=3.3,<4
+
+# --- Analitica ---
+pandas>=2.2,<3

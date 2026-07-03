@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Entorno
+.env
+
+# Datos generados (el scraping los regenera; no se versionan)
+data/raw/*
+data/clean/*
+data/*.db
+!data/raw/.gitkeep
+!data/clean/.gitkeep
+
+# Cache de modelos HuggingFace
+.hf_cache/
+
+# IDE / SO
+.idea/
+.vscode/
+.DS_Store
