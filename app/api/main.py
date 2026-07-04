@@ -156,3 +156,11 @@ def list_sessions(request: Request):
 def session_detail(session_id: str, request: Request):
     messages = _services(request).repo.get_session(session_id)
     return {"session_id": session_id, "messages": messages}
+
+
+@app.get("/metrics")
+def metrics(request: Request):
+    """Metricas de impacto calculadas sobre el historico de conversaciones."""
+    from app.analytics.metrics import ConversationAnalytics
+
+    return ConversationAnalytics(_services(request).repo).compute()
