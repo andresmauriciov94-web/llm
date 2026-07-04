@@ -1,0 +1,242 @@
+[
+  {
+    "hash": "e7a401d60d979fa3",
+    "url": "https://es.wikipedia.org/wiki/Wikipedia:Portada",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:23.962818+00:00"
+  },
+  {
+    "hash": "81c470c2b3d1bd8c",
+    "url": "https://es.wikipedia.org/wiki/Portal:Comunidad",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:25.745341+00:00"
+  },
+  {
+    "hash": "7b07ca60b778438c",
+    "url": "https://es.wikipedia.org/wiki/Portal:Actualidad",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:26.986864+00:00"
+  },
+  {
+    "hash": "7b56fff5a73c2956",
+    "url": "https://es.wikipedia.org/wiki/Especial:CambiosRecientes",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:29.391904+00:00"
+  },
+  {
+    "hash": "536de97117f62333",
+    "url": "https://es.wikipedia.org/wiki/Especial:P%C3%A1ginasNuevas",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:31.496982+00:00"
+  },
+  {
+    "hash": "dd4a94c94f47e245",
+    "url": "https://es.wikipedia.org/wiki/Especial:Aleatoria",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:33.470477+00:00"
+  },
+  {
+    "hash": "e56fe2c0fdae4860",
+    "url": "https://es.wikipedia.org/wiki/Ayuda:Contenidos",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:35.315496+00:00"
+  },
+  {
+    "hash": "f2694b47829d3483",
+    "url": "https://es.wikipedia.org/wiki/Wikipedia:Informes_de_error",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:38.597270+00:00"
+  },
+  {
+    "hash": "4226a35c652e7f7a",
+    "url": "https://es.wikipedia.org/wiki/Especial:P%C3%A1ginasEspeciales",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:40.784017+00:00"
+  },
+  {
+    "hash": "e6e585ef6a528653",
+    "url": "https://es.wikipedia.org/wiki/Especial:Buscar",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:42.619426+00:00"
+  },
+  {
+    "hash": "b1bf800f86c2dfcc",
+    "url": "https://es.wikipedia.org/wiki/Wikipedia_discusi%C3%B3n:Portada",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:44.294046+00:00"
+  },
+  {
+    "hash": "519d80c5e79bb2c8",
+    "url": "https://es.wikipedia.org/wiki/Especial:LoQueEnlazaAqu%C3%AD/Wikipedia:Portada",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:46.511655+00:00"
+  },
+  {
+    "hash": "86a003ccb3d0870d",
+    "url": "https://es.wikipedia.org/wiki/Especial:CambiosEnEnlazadas/Wikipedia:Portada",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:48.662652+00:00"
+  },
+  {
+    "hash": "96532d70fef25b6b",
+    "url": "https://es.wikipedia.org/wiki/Wikipedia:Bienvenidos",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:50.879315+00:00"
+  },
+  {
+    "hash": "bb4498259bc47e55",
+    "url": "https://es.wikipedia.org/wiki/Ayuda:Introducción",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:52.533825+00:00"
+  },
+  {
+    "hash": "f7e5a8508d6e6fba",
+    "url": "https://es.wikipedia.org/wiki/Especial:Estadísticas",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:54.188266+00:00"
+  },
+  {
+    "hash": "b54ea5e23119f837",
+    "url": "https://es.wikipedia.org/wiki/Wikipedia_en_español",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:56.217480+00:00"
+  },
+  {
+    "hash": "fc89926370dc7158",
+    "url": "https://es.wikipedia.org/wiki/Wikipedia:Café",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:57.855593+00:00"
+  },
+  {
+    "hash": "4a9755c81c2b7d0b",
+    "url": "https://es.wikipedia.org/wiki/Ayuda:Cómo_puedes_colaborar",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:52:59.932078+00:00"
+  },
+  {
+    "hash": "61d82e29116bc66a",
+    "url": "https://es.wikipedia.org/wiki/Wikipedia:Contacto",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:01.628197+00:00"
+  },
+  {
+    "hash": "af48f81dc850a0b4",
+    "url": "https://es.wikipedia.org/wiki/7_World_Trade_Center",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:03.250809+00:00"
+  },
+  {
+    "hash": "45faa8375add5ddc",
+    "url": "https://es.wikipedia.org/wiki/Archivo:Wtc7_jan06.jpg",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:04.591680+00:00"
+  },
+  {
+    "hash": "aa49dbf7065b7d1b",
+    "url": "https://es.wikipedia.org/wiki/Edificio",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:06.249518+00:00"
+  },
+  {
+    "hash": "bcce54fee8026bbf",
+    "url": "https://es.wikipedia.org/wiki/Nueva_York",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:08.488820+00:00"
+  },
+  {
+    "hash": "bcbb09bda5d96a22",
+    "url": "https://es.wikipedia.org/wiki/World_Trade_Center_(1973-2001)",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:10.874611+00:00"
+  },
+  {
+    "hash": "6cbf3fe8af7bece3",
+    "url": "https://es.wikipedia.org/wiki/Lower_Manhattan",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:13.078051+00:00"
+  },
+  {
+    "hash": "16f18be783750b62",
+    "url": "https://es.wikipedia.org/wiki/Atentados_del_11_de_septiembre_de_2001",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:14.686324+00:00"
+  },
+  {
+    "hash": "1f9f440237803214",
+    "url": "https://es.wikipedia.org/wiki/Larry_Silverstein",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:16.124160+00:00"
+  },
+  {
+    "hash": "1b58cb0c354238ab",
+    "url": "https://es.wikipedia.org/wiki/Autoridad_Portuaria_de_Nueva_York_y_Nueva_Jersey",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:17.388746+00:00"
+  },
+  {
+    "hash": "7a2f1611235e84d7",
+    "url": "https://es.wikipedia.org/wiki/Trapecio_(figura)",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:19.057058+00:00"
+  },
+  {
+    "hash": "44cdb616ad5f31f1",
+    "url": "https://es.wikipedia.org/wiki/Consolidated_Edison",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:20.317793+00:00"
+  },
+  {
+    "hash": "059ceca12783c5c4",
+    "url": "https://es.wikipedia.org/wiki/Salomon_Brothers",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:22.213351+00:00"
+  },
+  {
+    "hash": "0bc18304fde7467e",
+    "url": "https://es.wikipedia.org/wiki/One_World_Trade_Center",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:23.458105+00:00"
+  },
+  {
+    "hash": "b2d6172676e2a115",
+    "url": "https://es.wikipedia.org/wiki/Wikipedia:Artículos_destacados/Índice",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:24.907846+00:00"
+  },
+  {
+    "hash": "586608675574537d",
+    "url": "https://es.wikipedia.org/wiki/Wikipedia:Candidatos_a_artículos_destacados",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:28.981283+00:00"
+  },
+  {
+    "hash": "ddad6d9a1517b5b4",
+    "url": "https://es.wikipedia.org/wiki/Oro_de_Moscú",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:32.146561+00:00"
+  },
+  {
+    "hash": "4f1e7ad89908e242",
+    "url": "https://es.wikipedia.org/wiki/Tecnecio",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:34.243611+00:00"
+  },
+  {
+    "hash": "6de05aa7c67efee2",
+    "url": "https://es.wikipedia.org/wiki/Deja_Vu_(canción_de_Olivia_Rodrigo)",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:36.420089+00:00"
+  },
+  {
+    "hash": "7554fcd0f329b6e8",
+    "url": "https://es.wikipedia.org/wiki/Quinto_Cecilio_Metelo_Numídico",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:38.000662+00:00"
+  },
+  {
+    "hash": "4b877fb21defeaf7",
+    "url": "https://es.wikipedia.org/wiki/Latín",
+    "status": "ok",
+    "fetched_at": "2026-07-03T16:53:39.528334+00:00"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "hash": "70a38c81913effd8",
+    "url": "https://www.bancolombia.com",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:08.446634+00:00"
+  },
+  {
+    "hash": "3044e419fb3cc1f5",
+    "url": "https://www.bancolombia.com/personas",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:10.006781+00:00"
+  },
+  {
+    "hash": "bc1f225fdf6bbb9d",
+    "url": "https://www.bancolombia.com/personas/contactanos/bancolombia",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:11.585183+00:00"
+  },
+  {
+    "hash": "a894d14508541a84",
+    "url": "https://www.bancolombia.com/personas/creditos/consumo/credito-libre-inversion/simulador-libre-inversion",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:13.105063+00:00"
+  },
+  {
+    "hash": "ffed371b970c2116",
+    "url": "https://www.bancolombia.com/personas/productos-servicios/inversiones/cdts/fisicos/simulador-cdt",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:14.431529+00:00"
+  },
+  {
+    "hash": "e948c5ee7c22f7c6",
+    "url": "https://www.bancolombia.com/personas/necesidades/documentos/certificaciones",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:15.796622+00:00"
+  },
+  {
+    "hash": "c7d730c03beb5e4f",
+    "url": "https://www.bancolombia.com/personas/cuentas/ahorros-y-corriente/cuenta-ahorros",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:17.435534+00:00"
+  },
+  {
+    "hash": "cef73470afae12a7",
+    "url": "https://www.bancolombia.com/personas/creditos/vivienda/simulador-credito-vivienda",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:18.954257+00:00"
+  },
+  {
+    "hash": "6d6f43300b65e647",
+    "url": "https://www.bancolombia.com/personas/tarjetas-de-credito",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:21.149747+00:00"
+  },
+  {
+    "hash": "31f9d5f564f8fd04",
+    "url": "https://www.bancolombia.com/personas/contactanos",
+    "status": "ok",
+    "fetched_at": "2026-07-03T23:03:22.887645+00:00"
+  }
+]
