@@ -41,6 +41,9 @@ services:
         condition: service_started
     command: uvicorn app.api.main:app --host 0.0.0.0 --port 8000
 
+    environment:
+      PYTHONPATH: /app
+
   ui:
     build: .
     container_name: rag_ui
@@ -52,6 +55,9 @@ services:
     depends_on:
       - api
     command: streamlit run app/ui/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+
+    environment:
+      PYTHONPATH: /app
 
 volumes:
   qdrant_data:
