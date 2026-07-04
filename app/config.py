@@ -5,9 +5,15 @@ entorno / archivo .env. `get_settings()` esta cacheada, actuando como un
 Singleton ligero: la config se instancia una sola vez por proceso.
 """
 from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Raiz del proyecto = dos niveles arriba de este archivo (app/config.py).
+# Anclar aqui hace que data/ SIEMPRE caiga en el mismo lugar, sin importar
+# desde que directorio se ejecute el comando.
+PROJECT_ROOT = Path(__file__).resolve().parent
 
 
 class Settings(BaseSettings):
@@ -49,15 +55,15 @@ class Settings(BaseSettings):
     conversation_window: int = 6          # N mensajes previos (configurable)
 
     # ---- Scraper ---------------------------------------------------------
-    scrape_base_url: str = "https://www.bbva.com.co/"
-    scrape_max_pages: int = 40
+    scrape_base_url: str = "https://www.bancolombia.com/"
+    scrape_max_pages: int = 10
     scrape_delay_seconds: float = 1.0
     scrape_respect_robots: bool = True
 
-    # ---- Almacenamiento --------------------------------------------------
-    db_path: str = "data/app.db"
-    raw_dir: str = "data/raw"
-    clean_dir: str = "data/clean"
+    # ---- Almacenamiento (anclado a la raiz del proyecto) -----------------
+    db_path: str = str(PROJECT_ROOT / "data" / "app.db")
+    raw_dir: str = str(PROJECT_ROOT / "data" / "raw")
+    clean_dir: str = str(PROJECT_ROOT / "data" / "clean")
 
     # ---- API / UI --------------------------------------------------------
     api_host: str = "0.0.0.0"
