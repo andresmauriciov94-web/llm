@@ -9,7 +9,7 @@ instancia una sola vez y se reutiliza.
 """
 from __future__ import annotations
 
-from base import Embedder
+from app.embeddings.base import Embedder
 
 
 def _apply_prefix(text: str, kind: str, is_e5: bool) -> str:
