@@ -1,7 +1,7 @@
 -include .env
 export
 
-LLM_MODEL ?= qwen2.5:3b
+LLM_MODEL ?= qwen2.5:0.5b
 
 .PHONY: help build up down logs pull-model scrape ingest setup reset ps
 
