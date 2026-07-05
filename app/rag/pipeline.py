@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 
 from app.llm.base import LLMProvider
 from app.rag.prompt_builder import SYSTEM_PROMPT, PromptBuilder
+from app.rag.reranker import Reranker
 from app.rag.retriever import Retriever
 
 
@@ -41,6 +42,18 @@ class RetrieveStage(Stage):
 
     def handle(self, ctx: RagContext) -> RagContext:
         ctx.chunks = self.retriever.retrieve(ctx.question)
+        return ctx
+
+
+class RerankStage(Stage):
+    """Eslabon opcional: reordena los chunks por relevancia antes del prompt."""
+
+    def __init__(self, reranker: Reranker, top_n: int) -> None:
+        self.reranker = reranker
+        self.top_n = top_n
+
+    def handle(self, ctx: RagContext) -> RagContext:
+        ctx.chunks = self.reranker.rerank(ctx.question, ctx.chunks, self.top_n)
         return ctx
 
 

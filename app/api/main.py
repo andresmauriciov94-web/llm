@@ -20,9 +20,11 @@ from app.rag.pipeline import (
     BuildPromptStage,
     GenerateStage,
     RagPipeline,
+    RerankStage,
     RetrieveStage,
 )
 from app.rag.prompt_builder import PromptBuilder
+from app.rag.reranker import CrossEncoderReranker
 from app.rag.retriever import Retriever
 from app.vectorstore.qdrant_store import QdrantStore
 
@@ -45,13 +47,15 @@ def build_services(settings: Settings) -> Services:
     llm = create_llm(settings)
     repo = ConversationRepository(settings.db_path)
     retriever = Retriever(embedder, store, settings.top_k)
-    pipeline = RagPipeline(
-        [
-            RetrieveStage(retriever),
-            BuildPromptStage(PromptBuilder()),
-            GenerateStage(llm),
-        ]
-    )
+
+    # Cadena base; el reranker se inserta como eslabon si esta habilitado.
+    stages = [RetrieveStage(retriever)]
+    if settings.rerank_enabled:
+        reranker = CrossEncoderReranker(settings.reranker_model)
+        stages.append(RerankStage(reranker, settings.rerank_top_n))
+    stages += [BuildPromptStage(PromptBuilder()), GenerateStage(llm)]
+
+    pipeline = RagPipeline(stages)
     return Services(settings, repo, pipeline, settings.llm_model)
 
 
