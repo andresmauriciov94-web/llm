@@ -38,8 +38,9 @@ Todo el stack es **open source / self-hosted por defecto** y el proyecto levanta
    rate-limit) y guarda el HTML **crudo** y el texto **limpio**.
 2. **Indexación**: parte el texto en chunks con solapamiento, los vectoriza con
    embeddings multilingües y los indexa en Qdrant.
-3. **Chat**: recupera los fragmentos relevantes, arma el contexto junto con el
-   historial reciente y genera una respuesta con un LLM, citando fuentes.
+3. **Chat**: recupera los fragmentos relevantes, los reordena con un **reranker**
+   (cross-encoder, opcional), arma el contexto junto con el historial reciente y
+   genera una respuesta con un LLM, citando fuentes.
 4. **Memoria**: persiste la conversación por `session_id` y mantiene los últimos
    **N** mensajes en contexto (N configurable).
 5. **Analítica**: recorre el histórico de conversaciones y calcula métricas de
@@ -55,6 +56,7 @@ Todo el stack es **open source / self-hosted por defecto** y el proyecto levanta
 | Scraping | `requests` + `BeautifulSoup` + `trafilatura` | Ligero; trafilatura extrae el texto principal descartando menús/footers. |
 | Embeddings | `sentence-transformers` · `multilingual-e5-small` | Gratis y self-hosted; **multilingüe** porque el contenido está en español. |
 | Base vectorial | **Qdrant** (self-hosted) | Grado producción, gratis, corre como servicio propio; también soporta modo embebido en disco. |
+| Reranker (opcional) | `cross-encoder` · `bge-reranker-v2-m3` | Reordena los chunks por relevancia real antes del LLM; multilingüe, activable por configuración. |
 | LLM | **Ollama** (local, por defecto) · swappable a API | Cumple "herramientas gratis preferidas"; el patrón Strategy permite cambiar a OpenAI/Groq sin tocar código. |
 | Memoria + métricas | **SQLite** | Cero fricción, persistente y consultable con SQL para la analítica. |
 | API | **FastAPI** | Tipado, docs OpenAPI automáticas, async. |
@@ -71,10 +73,10 @@ razón real:
 
 | Patrón | Dónde | Por qué |
 |---|---|---|
-| **Strategy** | `app/llm/base.py`, `app/embeddings/base.py` | Proveedores de LLM y embeddings intercambiables tras una interfaz común. |
+| **Strategy** | `app/llm/base.py`, `app/embeddings/base.py`, `app/rag/reranker.py` | Proveedores de LLM, embeddings y reranker intercambiables tras una interfaz común. |
 | **Factory** | `app/llm/factory.py` | Único punto de creación del LLM según la configuración. |
 | **Adapter** | `app/vectorstore/qdrant_store.py` | Encapsula Qdrant tras una interfaz propia; el sistema no depende del cliente concreto. |
-| **Chain of Responsibility** | `app/rag/pipeline.py` | Etapas del RAG (retrieve → prompt → generate) encadenadas y extensibles. |
+| **Chain of Responsibility** | `app/rag/pipeline.py` | Etapas del RAG (retrieve → rerank → prompt → generate) encadenadas; el reranker se inserta o quita como un eslabón. |
 
 Adicionalmente se usa **Repository** (`app/memory/repository.py`) para aislar la
 persistencia del historial, y un **Singleton** ligero para la configuración
@@ -93,7 +95,7 @@ persistencia del historial, y un **Singleton** ligero para la configuración
 │   ├── embeddings/              # interfaz + sentence-transformers
 │   ├── llm/                     # Strategy + Factory (Ollama / OpenAI)
 │   ├── vectorstore/             # adapter de Qdrant
-│   ├── rag/                     # pipeline (Chain of Responsibility)
+│   ├── rag/                     # pipeline + reranker (Chain of Responsibility)
 │   ├── memory/                  # Repository sobre SQLite
 │   ├── analytics/               # métricas del histórico
 │   ├── api/                     # FastAPI (/chat, /sessions, /metrics)
@@ -247,6 +249,9 @@ Configuradas en `.env` (ver `.env.example` para la lista completa):
 | `QDRANT_URL` | Servidor o modo embebido | `http://qdrant:6333` |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | Tamaño y solapamiento de chunks | `800` / `120` |
 | `TOP_K` | Chunks recuperados por consulta | `5` |
+| `RERANK_ENABLED` | Activa el reranker cross-encoder | `true` |
+| `RERANKER_MODEL` | Modelo del reranker | `BAAI/bge-reranker-v2-m3` |
+| `RERANK_TOP_N` | Chunks que pasan al LLM tras el rerank | `3` |
 | `CONVERSATION_WINDOW` | N mensajes de contexto | `6` |
 | `SCRAPE_BASE_URL` | Sitio a scrapear | `https://...` |
 | `SCRAPE_MAX_PAGES` | Tope de páginas | `40` |
@@ -288,8 +293,6 @@ Documentación interactiva en `/docs`.
 
 ## Futuras mejoras
 
-- **Reranker** (cross-encoder) para reordenar los chunks por relevancia antes del
-  LLM (las claves de configuración `RERANK_*` ya están previstas).
 - **Gating por umbral**: responder "sin información" sin invocar al LLM cuando
   ningún chunk supera un umbral de relevancia.
 - **Condensación de la pregunta**: reescribir preguntas de seguimiento como
