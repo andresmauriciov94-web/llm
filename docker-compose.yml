@@ -15,6 +15,7 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: rag_ollama
+    profiles: ["ollama"]          # solo arranca con: docker compose --profile ollama up
     ports:
       - "11434:11434"
     volumes:
@@ -29,6 +30,8 @@ services:
     build: .
     container_name: rag_api
     env_file: .env
+    environment:
+      PYTHONPATH: /app
     ports:
       - "8000:8000"
     volumes:
@@ -37,17 +40,14 @@ services:
     depends_on:
       qdrant:
         condition: service_healthy
-      ollama:
-        condition: service_started
     command: uvicorn app.api.main:app --host 0.0.0.0 --port 8000
-
-    environment:
-      PYTHONPATH: /app
 
   ui:
     build: .
     container_name: rag_ui
     env_file: .env
+    environment:
+      PYTHONPATH: /app
     ports:
       - "8501:8501"
     volumes:
@@ -55,9 +55,6 @@ services:
     depends_on:
       - api
     command: streamlit run app/ui/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
-
-    environment:
-      PYTHONPATH: /app
 
 volumes:
   qdrant_data:

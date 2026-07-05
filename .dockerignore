@@ -1,0 +1,27 @@
+# Entorno y caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.hf_cache/
+
+# Datos generados (se regeneran con el scraping/ingesta)
+data/raw/*
+data/clean/*
+data/*.db
+data/qdrant_local/
+
+# Control de versiones e IDE
+.git/
+.gitignore
+.idea/
+.vscode/
+.DS_Store
+
+# Config local (nunca debe entrar a la imagen)
+.env
+
+# Documentacion no necesaria en runtime
+docs/
+*.md
+!README.md
