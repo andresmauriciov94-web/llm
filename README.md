@@ -1,31 +1,299 @@
-# Asistente RAG con Web Scraping
+# Asistente RAG Conversacional sobre el Sitio de un Banco
 
-Sistema RAG (Retrieval-Augmented Generation) que scrapea el sitio de un banco,
-lo indexa en una base vectorial y responde preguntas por una interfaz
-conversacional, con memoria por sesion y analitica de conversaciones.
+Sistema **RAG (Retrieval-Augmented Generation)** que permite consultar, mediante
+lenguaje natural, la información publicada en el sitio web de un banco. Scrapea
+el sitio, indexa el contenido en una base vectorial y responde preguntas
+apoyándose únicamente en ese contenido, con **memoria de conversación por
+sesión** y **analítica del histórico**.
 
-> **Estado:** en construccion (Paso 1 - scaffold). El README completo, con
-> instrucciones de arranque, patrones de diseno y stack, se entrega al final.
+Todo el stack es **open source / self-hosted por defecto** y el proyecto levanta
+**completamente con Docker**.
 
-## Stack (resumen)
+> El diseño de alto nivel (arquitectura, flujos, modelo de datos y trazabilidad
+> de requisitos) está documentado en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-| Componente        | Eleccion                              |
-|-------------------|---------------------------------------|
-| Lenguaje          | Python 3.11                           |
-| LLM               | Ollama (local) — swappable a API      |
-| Embeddings        | sentence-transformers (multilingue)   |
-| Vector store      | Qdrant (self-hosted)                  |
-| Memoria/metricas  | SQLite                                |
-| API               | FastAPI                               |
-| UI                | Streamlit                             |
-| Orquestacion      | Docker Compose                        |
+---
 
-## Arranque rapido (preview)
+## Tabla de contenido
 
-```bash
-cp .env.example .env
-make setup      # levanta servicios + descarga modelo + scrape + ingest
+- [Qué hace](#qué-hace)
+- [Stack tecnológico](#stack-tecnológico-y-justificación)
+- [Patrones de diseño](#patrones-de-diseño)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Requisitos previos](#requisitos-previos)
+- [Puesta en marcha con Docker](#puesta-en-marcha-con-docker-recomendado)
+- [Puesta en marcha sin Docker (modo local)](#puesta-en-marcha-sin-docker-modo-local)
+- [Uso de la interfaz conversacional](#uso-de-la-interfaz-conversacional)
+- [Consultar métricas (analítica)](#consultar-métricas-analítica)
+- [Variables de entorno](#variables-de-entorno)
+- [Endpoints de la API](#endpoints-de-la-api)
+- [Limitaciones y decisiones de diseño](#limitaciones-y-decisiones-de-diseño)
+- [Futuras mejoras](#futuras-mejoras)
+
+---
+
+## Qué hace
+
+1. **Scraping**: recorre un subconjunto del sitio (respetando `robots.txt` y con
+   rate-limit) y guarda el HTML **crudo** y el texto **limpio**.
+2. **Indexación**: parte el texto en chunks con solapamiento, los vectoriza con
+   embeddings multilingües y los indexa en Qdrant.
+3. **Chat**: recupera los fragmentos relevantes, arma el contexto junto con el
+   historial reciente y genera una respuesta con un LLM, citando fuentes.
+4. **Memoria**: persiste la conversación por `session_id` y mantiene los últimos
+   **N** mensajes en contexto (N configurable).
+5. **Analítica**: recorre el histórico de conversaciones y calcula métricas de
+   impacto (latencia, cobertura, preguntas frecuentes, fuentes más usadas).
+
+---
+
+## Stack tecnológico y justificación
+
+| Componente | Elección | Por qué |
+|---|---|---|
+| Lenguaje | **Python 3.11** | Requisito de la prueba. |
+| Scraping | `requests` + `BeautifulSoup` + `trafilatura` | Ligero; trafilatura extrae el texto principal descartando menús/footers. |
+| Embeddings | `sentence-transformers` · `multilingual-e5-small` | Gratis y self-hosted; **multilingüe** porque el contenido está en español. |
+| Base vectorial | **Qdrant** (self-hosted) | Grado producción, gratis, corre como servicio propio; también soporta modo embebido en disco. |
+| LLM | **Ollama** (local, por defecto) · swappable a API | Cumple "herramientas gratis preferidas"; el patrón Strategy permite cambiar a OpenAI/Groq sin tocar código. |
+| Memoria + métricas | **SQLite** | Cero fricción, persistente y consultable con SQL para la analítica. |
+| API | **FastAPI** | Tipado, docs OpenAPI automáticas, async. |
+| UI | **Streamlit** | Chat funcional y limpio con mínimo código. |
+| Configuración | `pydantic-settings` + `.env` | Configuración externalizada y validada. |
+| Orquestación | **Docker Compose** | Todo levanta con un comando. |
+
+---
+
+## Patrones de diseño
+
+Se implementan **cuatro** patrones (la prueba pide mínimo 3), cada uno con una
+razón real:
+
+| Patrón | Dónde | Por qué |
+|---|---|---|
+| **Strategy** | `app/llm/base.py`, `app/embeddings/base.py` | Proveedores de LLM y embeddings intercambiables tras una interfaz común. |
+| **Factory** | `app/llm/factory.py` | Único punto de creación del LLM según la configuración. |
+| **Adapter** | `app/vectorstore/qdrant_store.py` | Encapsula Qdrant tras una interfaz propia; el sistema no depende del cliente concreto. |
+| **Chain of Responsibility** | `app/rag/pipeline.py` | Etapas del RAG (retrieve → prompt → generate) encadenadas y extensibles. |
+
+Adicionalmente se usa **Repository** (`app/memory/repository.py`) para aislar la
+persistencia del historial, y un **Singleton** ligero para la configuración
+(`get_settings()` cacheado).
+
+---
+
+## Estructura del proyecto
+
+```
+.
+├── app/
+│   ├── config.py                # configuración centralizada (pydantic-settings)
+│   ├── scraper/                 # crawler + cleaner (raw + clean)
+│   ├── ingestion/               # chunker + indexer
+│   ├── embeddings/              # interfaz + sentence-transformers
+│   ├── llm/                     # Strategy + Factory (Ollama / OpenAI)
+│   ├── vectorstore/             # adapter de Qdrant
+│   ├── rag/                     # pipeline (Chain of Responsibility)
+│   ├── memory/                  # Repository sobre SQLite
+│   ├── analytics/               # métricas del histórico
+│   ├── api/                     # FastAPI (/chat, /sessions, /metrics)
+│   └── ui/                      # chat en Streamlit
+├── docs/ARCHITECTURE.md         # diseño de alto nivel
+├── data/                        # raw/ y clean/ (generado, no versionado)
+├── diagnose.py                  # diagnóstico de accesibilidad del sitio
+├── Dockerfile
+├── docker-compose.yml
+├── Makefile
+├── requirements.txt
+└── .env.example
 ```
 
-- UI:  http://localhost:8501
-- API: http://localhost:8000/docs
+---
+
+## Requisitos previos
+
+- **Docker** y **Docker Compose** (para el modo recomendado).
+- Alternativamente, **Python 3.11+** para el modo local sin Docker.
+- Al menos ~8 GB de RAM libres si se usa Ollama con un modelo local.
+- (Opcional) Una API key si se usa un LLM por API en lugar de Ollama.
+
+---
+
+## Puesta en marcha con Docker (recomendado)
+
+### 1. Clonar y configurar
+
+```bash
+git clone <URL-del-repo>
+cd <carpeta-del-repo>
+cp .env.example .env        # en Windows PowerShell: Copy-Item .env.example .env
+```
+
+Revisa el `.env` y ajusta la fuente de scraping y el LLM si hace falta
+(ver [Variables de entorno](#variables-de-entorno) y
+[Limitaciones](#limitaciones-y-decisiones-de-diseño)).
+
+### 2. Levantar todo con un comando
+
+**Linux / macOS / Codespaces** (con `make`):
+
+```bash
+make setup     # up + pull-model + scrape + ingest
+```
+
+**Windows** (o sin `make`), los mismos pasos de forma explícita:
+
+```bash
+docker compose up -d --build
+docker compose exec ollama ollama pull qwen2.5:0.5b
+docker compose run --rm api python -m app.scraper.run
+docker compose run --rm api python -m app.ingestion.run
+```
+
+### 3. Abrir el sistema
+
+- **Interfaz de chat**: http://localhost:8501
+- **API (documentación)**: http://localhost:8000/docs
+
+> La primera vez tarda: descarga imágenes, el modelo de Ollama y el de
+> embeddings. Es normal.
+
+---
+
+## Puesta en marcha sin Docker (modo local)
+
+Útil en equipos donde no se puede instalar Docker. Usa Qdrant **embebido en
+disco** y un LLM por API (no requiere instalar nada extra más allá de pip).
+
+En el `.env`:
+
+```
+QDRANT_URL=local:./data/qdrant_local
+LLM_PROVIDER=openai
+OPENAI_API_KEY=tu-key
+OPENAI_BASE_URL=https://api.groq.com/openai/v1   # ejemplo con Groq (gratis)
+LLM_MODEL=llama-3.1-8b-instant
+API_URL=http://localhost:8000
+```
+
+Luego:
+
+```bash
+pip install -r requirements.txt
+python -m app.scraper.run
+python -m app.ingestion.run          # escribe en ./data/qdrant_local y termina
+uvicorn app.api.main:app --port 8000 # terminal 1
+streamlit run app/ui/streamlit_app.py # terminal 2
+```
+
+> El modo embebido de Qdrant es de un proceso a la vez: ejecuta la ingesta
+> **antes** de levantar la API.
+
+---
+
+## Uso de la interfaz conversacional
+
+1. Abre la UI (puerto 8501).
+2. Escribe una pregunta sobre el contenido scrapeado. El asistente responde
+   citando las **fuentes** utilizadas.
+3. La conversación se mantiene por sesión: el sistema recuerda los últimos **N**
+   mensajes (configurable con `CONVERSATION_WINDOW`).
+4. El botón **"Nueva conversación"** inicia una sesión nueva.
+
+También puedes usar la API directamente:
+
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{"session_id":"demo","message":"¿Qué productos ofrece el banco?"}'
+```
+
+---
+
+## Consultar métricas (analítica)
+
+El sistema recorre el histórico de conversaciones (en SQLite) y calcula métricas
+de impacto: número de sesiones y mensajes, promedio por sesión, latencia
+p50/p95, **tasa de respuestas sin contexto**, preguntas más frecuentes y fuentes
+más usadas.
+
+```bash
+# Reporte legible por CLI
+docker compose exec api python -m app.analytics.run
+
+# Salida JSON
+docker compose exec api python -m app.analytics.run --json
+
+# Por API
+curl http://localhost:8000/metrics
+```
+
+> Las métricas se calculan sobre el histórico real, así que primero hay que
+> haber chateado algunas preguntas.
+
+---
+
+## Variables de entorno
+
+Configuradas en `.env` (ver `.env.example` para la lista completa):
+
+| Variable | Descripción | Ejemplo |
+|---|---|---|
+| `LLM_PROVIDER` | `ollama` u `openai` | `ollama` |
+| `LLM_MODEL` | Modelo del LLM | `qwen2.5:0.5b` |
+| `OLLAMA_BASE_URL` | URL de Ollama | `http://ollama:11434` |
+| `OPENAI_API_KEY` / `OPENAI_BASE_URL` | Credenciales si se usa API | — |
+| `EMBEDDING_MODEL` | Modelo de embeddings | `intfloat/multilingual-e5-small` |
+| `QDRANT_URL` | Servidor o modo embebido | `http://qdrant:6333` |
+| `CHUNK_SIZE` / `CHUNK_OVERLAP` | Tamaño y solapamiento de chunks | `800` / `120` |
+| `TOP_K` | Chunks recuperados por consulta | `5` |
+| `CONVERSATION_WINDOW` | N mensajes de contexto | `6` |
+| `SCRAPE_BASE_URL` | Sitio a scrapear | `https://...` |
+| `SCRAPE_MAX_PAGES` | Tope de páginas | `40` |
+
+---
+
+## Endpoints de la API
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| `GET` | `/health` | Estado del sistema y configuración activa. |
+| `POST` | `/chat` | Envía una pregunta; devuelve respuesta + fuentes + latencia. |
+| `GET` | `/sessions` | Lista las sesiones registradas. |
+| `GET` | `/sessions/{id}` | Mensajes de una sesión. |
+| `GET` | `/metrics` | Métricas del histórico de conversaciones. |
+
+Documentación interactiva en `/docs`.
+
+---
+
+## Limitaciones y decisiones de diseño
+
+- **El sitio de BBVA (`bbva.com.co`) responde 403** a peticiones programáticas por
+  un WAF anti-bot (verificable con `python diagnose.py`). Como la prueba permite
+  otra fuente, `SCRAPE_BASE_URL` se configura hacia un sitio accesible con
+  contenido equivalente. **El pipeline es agnóstico a la fuente**: basta cambiar
+  esa variable.
+- **Modelo LLM liviano por defecto** (`qwen2.5:0.5b`) para que arranque en
+  cualquier equipo. Para mejor calidad de respuesta, usar `qwen2.5:3b` o superior
+  si hay recursos. El trade-off es calidad vs. peso.
+- **Modo de desarrollo sin Docker**: por restricciones de equipo, el desarrollo
+  puede hacerse con Qdrant embebido y LLM por API. La **configuración dockerizada
+  por defecto usa Ollama (gratis)**, tal como pide la prueba.
+- **SQLite** es suficiente para un solo nodo; para alta concurrencia se migraría a
+  Postgres (aislado tras el patrón Repository, sin cambios en la lógica).
+- Embeddings y LLM corren en CPU: la latencia depende del hardware.
+
+---
+
+## Futuras mejoras
+
+- **Reranker** (cross-encoder) para reordenar los chunks por relevancia antes del
+  LLM (las claves de configuración `RERANK_*` ya están previstas).
+- **Gating por umbral**: responder "sin información" sin invocar al LLM cuando
+  ningún chunk supera un umbral de relevancia.
+- **Condensación de la pregunta**: reescribir preguntas de seguimiento como
+  consultas autónomas para mejorar la recuperación.
+- **Observabilidad** (trazas y tokens/costo por consulta).
+- **Suite de tests unitarios** y CI (GitHub Actions).
+- Scraping con navegador headless (Playwright) para sitios con mucho JavaScript.
