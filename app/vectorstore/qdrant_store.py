@@ -18,8 +18,15 @@ from qdrant_client.models import Distance, PointStruct, VectorParams
 
 class QdrantStore:
     def __init__(self, url: str, collection_name: str, vector_size: int) -> None:
+        # Tres modos:
+        #   ":memory:"              -> en memoria (tests)
+        #   "local:<ruta>"          -> embebido en disco, SIN servidor ni Docker
+        #   "http://host:6333"      -> servidor Qdrant (modo dockerizado)
         if url == ":memory:":
             self.client = QdrantClient(location=":memory:")
+        elif url.startswith("local:") or url.startswith("file:"):
+            path = url.split(":", 1)[1] or "./data/qdrant_local"
+            self.client = QdrantClient(path=path)
         else:
             self.client = QdrantClient(url=url)
         self.collection = collection_name

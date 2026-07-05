@@ -13,7 +13,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Raiz del proyecto = dos niveles arriba de este archivo (app/config.py).
 # Anclar aqui hace que data/ SIEMPRE caiga en el mismo lugar, sin importar
 # desde que directorio se ejecute el comando.
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
@@ -55,8 +55,8 @@ class Settings(BaseSettings):
     conversation_window: int = 6          # N mensajes previos (configurable)
 
     # ---- Scraper ---------------------------------------------------------
-    scrape_base_url: str = "https://www.bancolombia.com/"
-    scrape_max_pages: int = 10
+    scrape_base_url: str = "https://www.bbva.com.co/"
+    scrape_max_pages: int = 40
     scrape_delay_seconds: float = 1.0
     scrape_respect_robots: bool = True
 

@@ -21,6 +21,9 @@ RUN pip install --upgrade pip \
 
 COPY . .
 
+# Raiz del paquete en la ruta de busqueda (necesario para `streamlit run ...`)
+ENV PYTHONPATH=/app
+
 RUN mkdir -p data/raw data/clean
 
 EXPOSE 8000
