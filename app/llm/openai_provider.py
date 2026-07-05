@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import httpx
 
-from app.llm.base import LLMProvider
+from app.llm.base import GenerationResult, LLMProvider
 
 
 class OpenAIProvider(LLMProvider):
@@ -32,7 +32,7 @@ class OpenAIProvider(LLMProvider):
         self.max_tokens = max_tokens
         self.timeout = timeout
 
-    def generate(self, system_prompt: str, user_prompt: str) -> str:
+    def generate(self, system_prompt: str, user_prompt: str) -> GenerationResult:
         payload = {
             "model": self.model,
             "temperature": self.temperature,
@@ -62,4 +62,9 @@ class OpenAIProvider(LLMProvider):
             ) from exc
 
         data = resp.json()
-        return data["choices"][0]["message"]["content"].strip()
+        usage = data.get("usage", {}) or {}
+        return GenerationResult(
+            text=data["choices"][0]["message"]["content"].strip(),
+            prompt_tokens=int(usage.get("prompt_tokens", 0) or 0),
+            completion_tokens=int(usage.get("completion_tokens", 0) or 0),
+        )

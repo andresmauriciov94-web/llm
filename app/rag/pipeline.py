@@ -27,6 +27,8 @@ class RagContext:
     user_prompt: str = ""
     answer: str = ""
     latency_ms: int = 0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
 
 
 class Stage(ABC):
@@ -73,7 +75,10 @@ class GenerateStage(Stage):
         self.llm = llm
 
     def handle(self, ctx: RagContext) -> RagContext:
-        ctx.answer = self.llm.generate(SYSTEM_PROMPT, ctx.user_prompt)
+        result = self.llm.generate(SYSTEM_PROMPT, ctx.user_prompt)
+        ctx.answer = result.text
+        ctx.prompt_tokens = result.prompt_tokens
+        ctx.completion_tokens = result.completion_tokens
         return ctx
 
 

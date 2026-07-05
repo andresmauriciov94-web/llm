@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import httpx
 
-from app.llm.base import LLMProvider
+from app.llm.base import GenerationResult, LLMProvider
 
 
 class OllamaProvider(LLMProvider):
@@ -25,7 +25,7 @@ class OllamaProvider(LLMProvider):
         self.max_tokens = max_tokens
         self.timeout = timeout
 
-    def generate(self, system_prompt: str, user_prompt: str) -> str:
+    def generate(self, system_prompt: str, user_prompt: str) -> GenerationResult:
         payload = {
             "model": self.model,
             "stream": False,
@@ -56,4 +56,8 @@ class OllamaProvider(LLMProvider):
             ) from exc
 
         data = resp.json()
-        return data.get("message", {}).get("content", "").strip()
+        return GenerationResult(
+            text=data.get("message", {}).get("content", "").strip(),
+            prompt_tokens=int(data.get("prompt_eval_count", 0) or 0),
+            completion_tokens=int(data.get("eval_count", 0) or 0),
+        )

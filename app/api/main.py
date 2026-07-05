@@ -97,6 +97,7 @@ class ChatResponse(BaseModel):
     answer: str
     sources: list[Source]
     latency_ms: int
+    total_tokens: int = 0
 
 
 def _services(request: Request) -> Services:
@@ -155,6 +156,8 @@ def chat(req: ChatRequest, request: Request):
         latency_ms=ctx.latency_ms,
         retrieved_ids=retrieved_ids,
         model=svc.llm_model,
+        prompt_tokens=ctx.prompt_tokens,
+        completion_tokens=ctx.completion_tokens,
     )
 
     # Fuentes unicas para mostrar en la UI.
@@ -171,6 +174,7 @@ def chat(req: ChatRequest, request: Request):
         answer=ctx.answer,
         sources=sources,
         latency_ms=ctx.latency_ms,
+        total_tokens=ctx.prompt_tokens + ctx.completion_tokens,
     )
 
 

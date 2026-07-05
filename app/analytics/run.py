@@ -18,6 +18,7 @@ def _print_human(report: dict) -> None:
     t = report["totales"]
     lat = report["latencia_ms"]
     cov = report["cobertura"]
+    tok = report["tokens"]
 
     print("=" * 52)
     print("  ANALITICA DE CONVERSACIONES")
@@ -31,6 +32,10 @@ def _print_human(report: dict) -> None:
     print(f"  Latencia promedio ............ {lat['promedio']} ms")
     print(f"  Latencia p50 / p95 ........... {lat['p50']} / {lat['p95']} ms")
     print(f"  Latencia maxima .............. {lat['maxima']} ms")
+    print("-" * 52)
+    print(f"  Tokens totales ............... {tok['total']}")
+    print(f"    - prompt / completion ...... {tok['prompt']} / {tok['completion']}")
+    print(f"  Tokens promedio/respuesta .... {tok['promedio_por_respuesta']}")
     print("-" * 52)
     print(f"  Respuestas sin contexto ...... {cov['respuestas_sin_contexto']} "
           f"({cov['pct_sin_contexto']}%)")

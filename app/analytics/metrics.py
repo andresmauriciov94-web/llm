@@ -42,6 +42,9 @@ class ConversationAnalytics:
             m["latency_ms"] for m in asst_msgs if m.get("latency_ms") is not None
         ]
         no_context = [m for m in asst_msgs if not m.get("retrieved_ids")]
+        prompt_tokens = sum(int(m.get("prompt_tokens") or 0) for m in asst_msgs)
+        completion_tokens = sum(int(m.get("completion_tokens") or 0) for m in asst_msgs)
+        total_tokens = prompt_tokens + completion_tokens
 
         return {
             "totales": {
@@ -58,6 +61,14 @@ class ConversationAnalytics:
                 "p50": round(_percentile(latencies, 0.50), 1),
                 "p95": round(_percentile(latencies, 0.95), 1),
                 "maxima": max(latencies) if latencies else 0,
+            },
+            "tokens": {
+                "prompt": prompt_tokens,
+                "completion": completion_tokens,
+                "total": total_tokens,
+                "promedio_por_respuesta": (
+                    round(total_tokens / len(asst_msgs), 1) if asst_msgs else 0
+                ),
             },
             "cobertura": {
                 "respuestas_sin_contexto": len(no_context),

@@ -16,14 +16,16 @@ from pathlib import Path
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS messages (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    session_id    TEXT NOT NULL,
-    role          TEXT NOT NULL,
-    content       TEXT NOT NULL,
-    created_at    TEXT NOT NULL,
-    latency_ms    INTEGER,
-    retrieved_ids TEXT,
-    model         TEXT
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id        TEXT NOT NULL,
+    role              TEXT NOT NULL,
+    content           TEXT NOT NULL,
+    created_at        TEXT NOT NULL,
+    latency_ms        INTEGER,
+    retrieved_ids     TEXT,
+    model             TEXT,
+    prompt_tokens     INTEGER DEFAULT 0,
+    completion_tokens INTEGER DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
 """
@@ -47,6 +49,13 @@ class ConversationRepository:
     def _init_db(self) -> None:
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
+            # Migracion suave: agrega columnas de tokens si la BD es antigua.
+            existing = {r["name"] for r in conn.execute("PRAGMA table_info(messages)")}
+            for col in ("prompt_tokens", "completion_tokens"):
+                if col not in existing:
+                    conn.execute(
+                        f"ALTER TABLE messages ADD COLUMN {col} INTEGER DEFAULT 0"
+                    )
 
     # -- escritura ---------------------------------------------------------
     def add_message(
@@ -57,12 +66,15 @@ class ConversationRepository:
         latency_ms: int | None = None,
         retrieved_ids: list[str] | None = None,
         model: str | None = None,
+        prompt_tokens: int = 0,
+        completion_tokens: int = 0,
     ) -> int:
         with self._connect() as conn:
             cursor = conn.execute(
                 """INSERT INTO messages
-                   (session_id, role, content, created_at, latency_ms, retrieved_ids, model)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                   (session_id, role, content, created_at, latency_ms,
+                    retrieved_ids, model, prompt_tokens, completion_tokens)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     session_id,
                     role,
@@ -71,6 +83,8 @@ class ConversationRepository:
                     latency_ms,
                     json.dumps(retrieved_ids or []),
                     model,
+                    prompt_tokens,
+                    completion_tokens,
                 ),
             )
             return int(cursor.lastrowid)
@@ -113,4 +127,3 @@ class ConversationRepository:
         with self._connect() as conn:
             rows = conn.execute("SELECT * FROM messages ORDER BY id ASC").fetchall()
         return [self._row_to_dict(r) for r in rows]
-    

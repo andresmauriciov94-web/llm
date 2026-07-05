@@ -84,6 +84,27 @@ persistencia del historial, y un **Singleton** ligero para la configuración
 
 ---
 
+## Bonus implementados
+
+Además de los requisitos obligatorios, el proyecto incluye:
+
+- **Reranker** (cross-encoder `bge-reranker-v2-m3`): reordena los chunks por
+  relevancia real antes de pasarlos al LLM. Se activa/desactiva con
+  `RERANK_ENABLED` y se inserta como un eslabón del pipeline.
+- **Manejo de errores robusto en todas las capas**:
+  - *Scraper*: registra las páginas fallidas y continúa; reintentos ante fallos
+    transitorios.
+  - *LLM*: mensajes accionables (modelo no descargado, servicio caído).
+  - *Ingesta*: si un lote de embeddings falla, lo omite y continúa; reporta
+    cuántos chunks no se indexaron.
+  - *API*: validación de entrada, handler global de excepciones y códigos HTTP
+    semánticos (`400` entrada inválida, `503` infraestructura caída, `500`
+    fallo controlado).
+- **Configuración externalizada** completa vía `.env` (N mensajes, modelo,
+  tamaño de chunk, top_k, reranker, etc.).
+
+---
+
 ## Estructura del proyecto
 
 ```
@@ -216,8 +237,8 @@ curl -X POST http://localhost:8000/chat \
 
 El sistema recorre el histórico de conversaciones (en SQLite) y calcula métricas
 de impacto: número de sesiones y mensajes, promedio por sesión, latencia
-p50/p95, **tasa de respuestas sin contexto**, preguntas más frecuentes y fuentes
-más usadas.
+p50/p95, **consumo de tokens** (total y promedio por respuesta), **tasa de
+respuestas sin contexto**, preguntas más frecuentes y fuentes más usadas.
 
 ```bash
 # Reporte legible por CLI
@@ -272,6 +293,91 @@ Documentación interactiva en `/docs`.
 
 ---
 
+## Escalabilidad en la nube (AWS)
+
+El diseño desacoplado (patrones **Strategy, Repository, Adapter, Factory**) hace
+que llevar el sistema a una arquitectura **serverless** en AWS sea, en su mayoría,
+reimplementar interfaces existentes — sin reescribir la lógica de negocio.
+
+### Arquitectura propuesta
+
+```mermaid
+flowchart TB
+    U[Cliente / UI] -->|HTTPS| AGW[API Gateway - HTTP API]
+    AGW --> L[Lambda: API FastAPI + Mangum<br/>imagen de contenedor]
+    L --> BR[Amazon Bedrock<br/>LLM + embeddings]
+    L --> VDB[(OpenSearch Serverless<br/>o Qdrant Cloud)]
+    L --> DDB[(DynamoDB<br/>historial + tokens)]
+    L --> SM[Secrets Manager]
+    L --> CW[CloudWatch Logs]
+
+    subgraph ING [Ingesta programada]
+        EB[EventBridge Schedule] --> LI[Lambda de ingesta<br/>imagen de contenedor]
+        LI --> S3[(S3: raw + clean)]
+        LI --> VDB
+        LI --> BR
+    end
+
+    ECR[(Amazon ECR<br/>imagenes Docker)] -. build / push .-> L
+    ECR -. build / push .-> LI
+```
+
+### Cómo escala cada componente
+
+- **Empaquetado — Amazon ECR**: la **misma imagen** del `Dockerfile` se publica
+  en ECR y alimenta las funciones Lambda basadas en contenedor.
+- **API — AWS Lambda + API Gateway**: la app FastAPI se envuelve con `Mangum`
+  para correr en Lambda; **API Gateway** (HTTP API) enruta `/chat`, `/sessions` y
+  `/metrics`. Escala automáticamente por petición, sin servidores que administrar.
+- **LLM y embeddings — Amazon Bedrock**: se añade un `BedrockProvider` (Strategy)
+  y un embedder de Bedrock/Titan. Evita cargar modelos pesados en la Lambda y
+  elimina el cold start de torch.
+- **Base vectorial**: Amazon OpenSearch Serverless (con soporte vectorial) o
+  Qdrant Cloud, detrás del mismo **Adapter**.
+- **Memoria — DynamoDB**: un `DynamoDBRepository` (mismo contrato **Repository**)
+  para historial y tokens; serverless y con escalado automático.
+- **Ingesta — EventBridge + Lambda / Fargate**: un *schedule* dispara la ingesta
+  periódica; el HTML crudo y limpio se guarda en **S3**. Para sitios grandes,
+  ECS Fargate o AWS Batch evitan el límite de 15 min de Lambda.
+- **Secretos — Secrets Manager**: API keys y credenciales.
+- **UI**: Streamlit se despliega en **ECS Fargate** o **App Runner** (no encaja en
+  Lambda por ser un proceso persistente); alternativamente, un front estático en
+  **S3 + CloudFront** que consume API Gateway.
+- **Observabilidad — CloudWatch**: logs y métricas.
+
+### Flujo de despliegue (resumen)
+
+```bash
+# 1. Publicar la imagen en ECR
+aws ecr create-repository --repository-name rag-assistant
+docker build -t rag-assistant .
+ACCT=<account-id>; REGION=<region>
+docker tag rag-assistant:latest $ACCT.dkr.ecr.$REGION.amazonaws.com/rag-assistant:latest
+aws ecr get-login-password --region $REGION | \
+  docker login --username AWS --password-stdin $ACCT.dkr.ecr.$REGION.amazonaws.com
+docker push $ACCT.dkr.ecr.$REGION.amazonaws.com/rag-assistant:latest
+
+# 2. Crear la Lambda desde la imagen y conectarla a API Gateway (HTTP API).
+#    Recomendado vía IaC: Terraform, AWS SAM o CDK.
+```
+
+### Por qué la migración es de bajo esfuerzo
+
+Cada servicio gestionado de AWS entra por una **interfaz que ya existe** en el
+código; el pipeline RAG y la API **no cambian**:
+
+| Local | AWS gestionado | Interfaz a implementar |
+|---|---|---|
+| Ollama / API | Amazon Bedrock | `LLMProvider` (Strategy) |
+| sentence-transformers | Bedrock Titan | `Embedder` (Strategy) |
+| Qdrant | OpenSearch Serverless / Qdrant Cloud | `QdrantStore` (Adapter) |
+| SQLite | DynamoDB | `ConversationRepository` (Repository) |
+
+> Para el empaquetado en Lambda se añadiría `mangum` a `requirements.txt` y un
+> handler que envuelva la app FastAPI (`handler = Mangum(app)`).
+
+---
+
 ## Limitaciones y decisiones de diseño
 
 - **El sitio de BBVA (`bbva.com.co`) responde 403** a peticiones programáticas por
@@ -297,6 +403,6 @@ Documentación interactiva en `/docs`.
   ningún chunk supera un umbral de relevancia.
 - **Condensación de la pregunta**: reescribir preguntas de seguimiento como
   consultas autónomas para mejorar la recuperación.
-- **Observabilidad** (trazas y tokens/costo por consulta).
+- **Observabilidad** (trazas por consulta con OpenTelemetry).
 - **Suite de tests unitarios** y CI (GitHub Actions).
 - Scraping con navegador headless (Playwright) para sitios con mucho JavaScript.
