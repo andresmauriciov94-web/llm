@@ -70,6 +70,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="RAG Bank Assistant", version="1.0.0", lifespan=lifespan)
 
 
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Ultima red de seguridad: ningun error sale sin formato JSON claro."""
+    from fastapi.responses import JSONResponse
+
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Error interno inesperado: {type(exc).__name__}"},
+    )
+
+
 # -- esquemas ----------------------------------------------------------------
 class ChatRequest(BaseModel):
     session_id: str
@@ -108,6 +119,12 @@ def health():
 def chat(req: ChatRequest, request: Request):
     if not req.message.strip():
         raise HTTPException(status_code=400, detail="El mensaje no puede estar vacio.")
+    if len(req.message) > 4000:
+        raise HTTPException(
+            status_code=400, detail="El mensaje es demasiado largo (max 4000 caracteres)."
+        )
+    if not req.session_id.strip():
+        raise HTTPException(status_code=400, detail="session_id es requerido.")
 
     svc = _services(request)
     n = svc.settings.conversation_window
@@ -118,7 +135,13 @@ def chat(req: ChatRequest, request: Request):
     try:
         ctx = svc.pipeline.run(req.message, history=history)
     except RuntimeError as exc:
+        # Errores esperables de infra (LLM/Qdrant caidos) -> 503 con detalle.
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        # Cualquier otro fallo del pipeline -> 500 controlado.
+        raise HTTPException(
+            status_code=500, detail=f"Fallo procesando la consulta: {type(exc).__name__}"
+        ) from exc
 
     retrieved_ids = [
         f"{c.get('url', '')}#{c.get('chunk_index', 0)}" for c in ctx.chunks

@@ -55,14 +55,26 @@ class Indexer:
         self.store.vector_size = self.embedder.dimension
         self.store.ensure_collection(recreate=recreate)
 
-        # 3) Embeddings + upsert por lotes
+        # 3) Embeddings + upsert por lotes (un lote fallido no aborta todo)
         total = 0
+        errores = 0
         for start in range(0, len(all_chunks), self.batch_size):
             batch = all_chunks[start : start + self.batch_size]
-            vectors = self.embedder.embed_texts([c["text"] for c in batch])
-            total += self.store.upsert_chunks(batch, vectors)
-            print(f"[indexer] indexados {total}/{len(all_chunks)}")
+            try:
+                vectors = self.embedder.embed_texts([c["text"] for c in batch])
+                total += self.store.upsert_chunks(batch, vectors)
+                print(f"[indexer] indexados {total}/{len(all_chunks)}")
+            except Exception as exc:  # noqa: BLE001
+                errores += len(batch)
+                print(f"[indexer] lote {start} fallo, se omite: {type(exc).__name__}: {exc}")
 
         count = self.store.count()
+        if errores:
+            print(f"[indexer] AVISO: {errores} chunks no se indexaron por errores.")
         print(f"[indexer] Listo. Puntos en la coleccion: {count}")
-        return {"documents": len(documents), "chunks": len(all_chunks), "indexed": count}
+        return {
+            "documents": len(documents),
+            "chunks": len(all_chunks),
+            "indexed": count,
+            "errors": errores,
+        }
