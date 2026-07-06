@@ -18,6 +18,7 @@ SYSTEM_PROMPT = (
     "3. Al final, agrega una linea 'Fuentes:' listando los titulos o URLs de los "
     "bloques que realmente usaste.\n"
     "4. Si el CONTEXTO no contiene la respuesta, dilo con honestidad "
+    "5. proporsiona el link para dirigirl donde el usuario solicita"
     "('No encontre esa informacion en el sitio') y NO inventes datos."
 )
 
